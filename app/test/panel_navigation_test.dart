@@ -34,6 +34,12 @@ void main() {
     await tester.pageBack();
     await tester.pumpAndSettle();
     expect(find.byKey(const ValueKey('grid-settings')), findsOneWidget);
+
+    await tester.fling(find.byType(PageView), const Offset(700, 0), 1200);
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const ValueKey('grid-lights')));
+    await tester.pumpAndSettle();
+    expect(find.text('功能页面已预留，等待家庭中枢接入。'), findsOneWidget);
   });
 
   testWidgets('settings changes theme and restores it after restart', (
