@@ -7,7 +7,7 @@ import 'package:shared_preferences_platform_interface/shared_preferences_async_p
 
 void main() {
   setUp(() {
-    // 每个测试都从独立的空存储开始，避免常用栏配置互相影响。
+    // 每个测试都从独立的空存储开始，避免常用栏和设置互相影响。
     SharedPreferencesAsyncPlatform.instance =
         InMemorySharedPreferencesAsync.empty();
   });
@@ -29,11 +29,46 @@ void main() {
 
     await tester.tap(find.byKey(const ValueKey('grid-settings')));
     await tester.pumpAndSettle();
-    expect(find.text('功能页面已预留，等待家庭中枢接入。'), findsOneWidget);
+    expect(find.text('选择平板界面的浅色或深色外观。'), findsOneWidget);
 
-    await tester.tap(find.text('返回应用'));
+    await tester.pageBack();
     await tester.pumpAndSettle();
     expect(find.byKey(const ValueKey('grid-settings')), findsOneWidget);
+  });
+
+  testWidgets('settings changes theme and restores it after restart', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(1200, 800);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+
+    await tester.pumpWidget(const HomeLabPanelApp());
+    await tester.pumpAndSettle();
+    await tester.fling(find.byType(PageView), const Offset(-700, 0), 1200);
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const ValueKey('grid-settings')));
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('深色'));
+    await tester.pumpAndSettle();
+    expect(
+      tester.widget<MaterialApp>(find.byType(MaterialApp)).themeMode,
+      ThemeMode.dark,
+    );
+    expect(
+      await SharedPreferencesAsync().getString('settings.themeMode.v1'),
+      'dark',
+    );
+
+    await tester.pumpWidget(const SizedBox.shrink());
+    await tester.pumpWidget(const HomeLabPanelApp());
+    await tester.pumpAndSettle();
+    expect(
+      tester.widget<MaterialApp>(find.byType(MaterialApp)).themeMode,
+      ThemeMode.dark,
+    );
   });
 
   testWidgets('long press adds and removes a dock app and saves it', (

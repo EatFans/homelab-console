@@ -2,40 +2,25 @@ import 'dart:math' as math;
 import 'dart:ui';
 
 import 'package:flutter/material.dart';
-import 'package:homelab_panel/pages/feature_placeholder_page.dart';
+import 'package:homelab_panel/app/app_feature.dart';
+import 'package:homelab_panel/features/launcher/dock_storage.dart';
 import 'package:homelab_panel/theme/panel_theme.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 
 /// 类似手机桌面的应用入口：横向翻页，底部固定常用应用栏。
 /// 长按图标可拖进常用栏，也可从常用栏拖回上方的应用区域。
-class AppsPage extends StatefulWidget {
-  const AppsPage({super.key});
+class LauncherPage extends StatefulWidget {
+  const LauncherPage({super.key, required this.features});
+
+  final List<AppFeature> features;
 
   @override
-  State<AppsPage> createState() => _AppsPageState();
+  State<LauncherPage> createState() => _LauncherPageState();
 }
 
-class _AppsPageState extends State<AppsPage> {
+class _LauncherPageState extends State<LauncherPage> {
   static const _dockSize = 5;
-  static const _dockStorageKey = 'launcher.dock.v1';
 
-  // id 用来保存常用栏的位置；显示名称将来可以修改而不破坏已保存的配置。
-  static const _features = [
-    _FeatureEntry('rooms', '房间', Icons.meeting_room_rounded),
-    _FeatureEntry('devices', '设备', Icons.devices_rounded),
-    _FeatureEntry('scenes', '场景', Icons.auto_awesome_rounded),
-    _FeatureEntry('lights', '灯光', Icons.lightbulb_rounded),
-    _FeatureEntry('climate', '环境', Icons.thermostat_rounded),
-    _FeatureEntry('curtains', '窗帘', Icons.blinds_rounded),
-    _FeatureEntry('music', '音乐', Icons.music_note_rounded),
-    _FeatureEntry('security', '安防', Icons.shield_rounded),
-    _FeatureEntry('cameras', '摄像头', Icons.videocam_rounded),
-    _FeatureEntry('energy', '能耗', Icons.bolt_rounded),
-    _FeatureEntry('automation', '自动化', Icons.sync_rounded),
-    _FeatureEntry('settings', '设置', Icons.settings_rounded),
-  ];
-
-  final _preferences = SharedPreferencesAsync();
+  final _dockStorage = DockStorage();
   final _pageController = PageController();
 
   // null 表示空位。初次使用预置三个入口，剩余两个位置可直接拖入。
@@ -57,21 +42,21 @@ class _AppsPageState extends State<AppsPage> {
     super.dispose();
   }
 
-  _FeatureEntry? _featureById(String id) {
-    for (final feature in _features) {
+  AppFeature? _featureById(String id) {
+    for (final feature in widget.features) {
       if (feature.id == id) return feature;
     }
     return null;
   }
 
-  List<_FeatureEntry> get _pageFeatures => [
-    for (final feature in _features)
+  List<AppFeature> get _pageFeatures => [
+    for (final feature in widget.features)
       if (!_dockSlots.contains(feature.id)) feature,
   ];
 
   Future<void> _loadDock() async {
     try {
-      final saved = await _preferences.getStringList(_dockStorageKey);
+      final saved = await _dockStorage.read();
       if (!mounted || _dockEdited || saved == null) return;
 
       final slots = List<String?>.filled(_dockSize, null);
@@ -90,11 +75,11 @@ class _AppsPageState extends State<AppsPage> {
   }
 
   void _saveDock() {
-    final snapshot = [for (final id in _dockSlots) id ?? ''];
+    final snapshot = List<String?>.from(_dockSlots);
     // 顺序写入，避免用户快速拖动几次后，较早的写入覆盖最新顺序。
     _saveQueue = _saveQueue.then((_) async {
       try {
-        await _preferences.setStringList(_dockStorageKey, snapshot);
+        await _dockStorage.write(snapshot);
       } catch (error) {
         debugPrint('保存常用应用栏失败：$error');
       }
@@ -139,13 +124,10 @@ class _AppsPageState extends State<AppsPage> {
     });
   }
 
-  void _openFeature(_FeatureEntry feature) {
-    Navigator.of(context).push(
-      MaterialPageRoute<void>(
-        builder: (_) =>
-            FeaturePlaceholderPage(title: feature.title, icon: feature.icon),
-      ),
-    );
+  void _openFeature(AppFeature feature) {
+    Navigator.of(
+      context,
+    ).push(MaterialPageRoute<void>(builder: feature.buildPage));
   }
 
   @override
@@ -272,7 +254,7 @@ class _AppsPageState extends State<AppsPage> {
     );
   }
 
-  Widget _buildGridPage(List<_FeatureEntry> features, int columns) {
+  Widget _buildGridPage(List<AppFeature> features, int columns) {
     return Padding(
       padding: const EdgeInsets.fromLTRB(18, 16, 18, 0),
       child: Center(
@@ -433,7 +415,7 @@ class _AppsPageState extends State<AppsPage> {
   }
 
   Widget _dragFeedback(
-    _FeatureEntry feature,
+    AppFeature feature,
     Size sourceSize, {
     bool compact = false,
   }) => Material(
@@ -448,14 +430,6 @@ class _AppsPageState extends State<AppsPage> {
   );
 }
 
-class _FeatureEntry {
-  const _FeatureEntry(this.id, this.title, this.icon);
-
-  final String id;
-  final String title;
-  final IconData icon;
-}
-
 class _AppTile extends StatelessWidget {
   const _AppTile({
     required this.feature,
@@ -463,7 +437,7 @@ class _AppTile extends StatelessWidget {
     this.compact = false,
   });
 
-  final _FeatureEntry feature;
+  final AppFeature feature;
   final VoidCallback onTap;
   final bool compact;
 
@@ -485,7 +459,7 @@ class _AppTile extends StatelessWidget {
 class _AppIcon extends StatelessWidget {
   const _AppIcon({required this.feature, this.compact = false});
 
-  final _FeatureEntry feature;
+  final AppFeature feature;
   final bool compact;
 
   @override
