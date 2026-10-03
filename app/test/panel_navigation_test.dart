@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:homelab_panel/app/app.dart';
+import 'package:homelab_panel/app.dart';
 
 void main() {
   // 模拟 1200×800 的平板屏幕，检查 Tab 切换、打开功能页和返回。

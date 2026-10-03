@@ -14,9 +14,9 @@
 | [Bloc 的 Flutter Todos 示例](https://github.com/felangel/bloc/tree/master/examples/flutter_todos/lib) | 按功能组织界面代码，入口、主题等放在应用级。 | 使用功能目录方便后续分别开发首页、设备和中枢连接；暂不因示例而引入 Bloc。 |
 | [Flutter Architecture Samples](https://github.com/brianegan/flutter_architecture_samples) | 同一应用展示多种状态管理方式，并提醒根据项目需求选择。 | 状态管理先使用 Flutter 自带能力；当异步状态和共享状态变复杂时再选型。 |
 
-## 目录演进
+## 当前目录
 
-当前已落地的目录：
+目前只有两个一级页面和一个占位功能页。页面集中在 `pages/`，主题单独放在 `theme/`，这样打开 `lib/` 就能直接找到代码：
 
 ```text
 app/
@@ -24,34 +24,23 @@ app/
 ├── ios/                             # iOS / iPadOS 平台工程
 ├── lib/
 │   ├── main.dart                    # 启动入口
-│   ├── app/app.dart                 # MaterialApp、主题与应用级配置
-│   ├── app/presentation/
-│   │   └── panel_shell.dart         # 一级 Tab 与悬浮切换栏
-│   └── features/
-│       ├── launcher/presentation/   # 应用入口与占位功能页
-│       └── dashboard/presentation/  # 总览占位页
+│   ├── app.dart                     # MaterialApp 与初始页面
+│   ├── theme/panel_theme.dart       # 浅色和深色主题
+│   └── pages/
+│       ├── tab_shell.dart           # 一级 Tab 与悬浮切换栏
+│       ├── apps_page.dart           # 应用入口
+│       ├── overview_page.dart       # 总览占位页
+│       └── feature_placeholder_page.dart # 入口占位页
 ├── test/                             # Tab 与入口导航测试
 ├── analysis_options.yaml
 └── pubspec.yaml
 ```
 
-新增功能时按实际需要扩展，而不是先创建空目录：
+阅读路径是 `main.dart` → `app.dart` → `tab_shell.dart` → 各页面。想改某个界面，先去同名的页面文件；想改全局配色，去 `theme/`。`android/`、`ios/` 保留给平台配置和打包，日常 Flutter 页面开发主要在 `lib/`。
 
-```text
-lib/
-├── features/
-│   ├── launcher/presentation/      # 应用入口
-│   ├── dashboard/presentation/     # 家庭概览
-│   ├── hub_connection/presentation/# 发现、连接与连接状态
-│   └── devices/presentation/       # 设备列表、详情与操作
-├── data/
-│   ├── models/                     # 应用使用的设备、房间等模型
-│   ├── services/                   # Hub 协议客户端及本地存储适配
-│   └── repositories/               # 缓存、刷新、错误映射与数据来源协调
-└── ui/core/                        # 多个功能共用的主题与组件
-```
+## 什么时候再拆目录
 
-`features/` 放用户能看到的功能；`data/` 放可能被多个功能共用的数据访问。单个页面的状态先留在该功能内。确实出现跨功能的复杂规则时，再提取领域层；确实需要多页面导航时，再增加路由目录。
+当前不创建尚未使用的架构层。一个功能真正出现多个页面和专属状态逻辑时，再将相关文件放到同一个功能目录，例如 `pages/devices/`；不同功能共同使用的 Hub 通信代码出现后，再建立 `data/`。这只是扩展规则，不是现在已有的目录。
 
 ## 数据与交互边界
 

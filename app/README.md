@@ -10,26 +10,41 @@ HomeLab Panel 是 [HomeLab](../README.md) 的 Flutter 平板控制端。家庭�
 
 ## 工程结构
 
+先只看 `lib/`：这里是你日常修改界面和交互的地方。`android/`、`ios/` 是 Flutter 调用原生平台能力和打包时使用的工程，普通页面开发通常不用进入。
+
 ```text
 app/
-├── android/                                  Android 平台工程
-├── ios/                                      iOS / iPadOS 平台工程
+├── android/                         Android 平台工程
+├── ios/                             iOS / iPadOS 平台工程
 ├── lib/
-│   ├── main.dart                             Flutter 启动入口
-│   ├── app/app.dart                          应用名称和主题
-│   ├── app/presentation/panel_shell.dart     两个 Tab 与悬浮切换栏
-│   ├── app/theme/panel_theme.dart            浅色/深色主题色与配置
-│   ├── features/launcher/presentation/       应用网格与入口占位页
-│   └── features/dashboard/presentation/      总览占位页
-├── test/panel_navigation_test.dart           Tab 与入口导航测试
-├── analysis_options.yaml                     Dart 静态检查规则
-├── pubspec.yaml                              包名、版本和依赖
-└── pubspec.lock                              已解析的依赖版本
+│   ├── main.dart                    程序启动入口
+│   ├── app.dart                     应用名称、主题和初始页面
+│   ├── theme/
+│   │   └── panel_theme.dart         浅色/深色颜色配置
+│   └── pages/
+│       ├── tab_shell.dart           底部 Tab 和两个一级页面的切换
+│       ├── apps_page.dart           「应用」页及功能入口网格
+│       ├── overview_page.dart       「总览」占位页
+│       └── feature_placeholder_page.dart  点击入口后的占位页
+├── test/                            页面交互测试
+├── pubspec.yaml                     包名、版本和依赖
+└── analysis_options.yaml            Dart 静态检查规则
 ```
 
-启动顺序是 `main.dart` 调用 `runApp`，`HomeLabPanelApp` 创建 `MaterialApp`，再显示 `PanelShell`。`PanelShell` 保留两个一级页面的状态，悬浮切换栏负责切换；应用入口使用标准页面导航打开占位功能页。数据层和页面状态层要等 Hub API 明确后才会加入。
+启动顺序：`main.dart` → `app.dart` → `pages/tab_shell.dart` → `pages/apps_page.dart`。点击入口时，再打开 `pages/feature_placeholder_page.dart`；切换 Tab 时显示 `pages/overview_page.dart`。
 
-刚接触 Flutter 时，建议按 `main.dart` → `app/app.dart` → `panel_shell.dart` → `launcher_screen.dart` 的顺序读代码。`Widget` 是界面组件，`build` 返回组件树；`StatefulWidget` 用于保存会变化的值，调用 `setState` 后 Flutter 会重新构建相关界面。应用入口通过 `Navigator.push` 打开功能页，功能页通过 `Navigator.pop` 返回。关键位置已在源码中加入中文注释。
+| 你想改什么 | 去哪个文件 |
+| --- | --- |
+| 应用启动、系统浅色/深色跟随 | `lib/app.dart` |
+| 颜色和主题 | `lib/theme/panel_theme.dart` |
+| 底部悬浮 Tab、默认显示哪个页 | `lib/pages/tab_shell.dart` |
+| 应用图标、排列和顶部状态提示 | `lib/pages/apps_page.dart` |
+| 总览页内容 | `lib/pages/overview_page.dart` |
+| 入口点击后的临时页面 | `lib/pages/feature_placeholder_page.dart` |
+
+刚接触 Flutter 时，按上面的启动顺序读源码即可。`Widget` 是界面组件，`build` 返回组件树；`StatefulWidget` 用于保存会变化的值，调用 `setState` 后 Flutter 会重新构建相关界面。应用入口通过 `Navigator.push` 打开功能页，功能页通过 `Navigator.pop` 返回。关键位置有中文注释。
+
+目前页面少，所以先集中放在 `pages/`。Hub API 和具体功能确定后，再把变大的功能拆成独立目录；现在不放空的 `models/`、`services/` 或 `repositories/`。
 
 `pubspec.yaml` 中的 `homelab_panel` 是 Dart 包名；设备桌面上显示的是 **HomeLab Panel**。Android 和 iOS 当前的应用标识符仍是 `cn.eatfan.app`，正式分发前需要确认是否更换；它与显示名称是两回事。
 

@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
-import 'package:homelab_panel/app/theme/panel_theme.dart';
+import 'package:homelab_panel/theme/panel_theme.dart';
 
 /// 功能入口的临时页面。复用同一个页面，通过 title/icon 区分入口。
 /// 后续接入具体功能时，再将对应入口替换成真实页面。
-class FeaturePlaceholderScreen extends StatelessWidget {
-  const FeaturePlaceholderScreen({
+class FeaturePlaceholderPage extends StatelessWidget {
+  const FeaturePlaceholderPage({
     super.key,
     required this.title,
     required this.icon,

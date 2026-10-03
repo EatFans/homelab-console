@@ -44,4 +44,4 @@
 3. **状态提示**：未连接、连接中、失败等使用图标 + 文案；应用页只在标题同行放一个紧凑状态标签，不占用独立说明区。状态区域不得伪装成已连接或可控制。
 4. **功能页**：沿用同一表面、字体和导航规则；占位页清楚标注功能未实现。
 
-实际实现位于 [`app/lib/app/theme/panel_theme.dart`](../app/lib/app/theme/panel_theme.dart)，`MaterialApp` 使用 `ThemeMode.system`。在 Android 和 iOS 的浅色、深色模式下都应检查可读性、触控目标与悬浮栏对内容的遮挡。
+实际实现位于 [`app/lib/theme/panel_theme.dart`](../app/lib/theme/panel_theme.dart)，`MaterialApp` 使用 `ThemeMode.system`。在 Android 和 iOS 的浅色、深色模式下都应检查可读性、触控目标与悬浮栏对内容的遮挡。

@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
-import 'package:homelab_panel/app/theme/panel_theme.dart';
-import 'package:homelab_panel/features/launcher/presentation/feature_placeholder_screen.dart';
+import 'package:homelab_panel/pages/feature_placeholder_page.dart';
+import 'package:homelab_panel/theme/panel_theme.dart';
 
 /// “应用”Tab：展示功能入口。这里尚未接入 Hub，入口数据暂时写在本地。
-class LauncherScreen extends StatelessWidget {
-  const LauncherScreen({super.key});
+class AppsPage extends StatelessWidget {
+  const AppsPage({super.key});
 
   // 每个入口只有名称和图标；以后接入真实功能时可逐步替换导航目标。
   static const _features = [
@@ -57,7 +57,7 @@ class LauncherScreen extends StatelessWidget {
                       // push 打开新页面；新页面中的 pop 会返回应用列表。
                       onTap: () => Navigator.of(context).push(
                         MaterialPageRoute<void>(
-                          builder: (_) => FeaturePlaceholderScreen(
+                          builder: (_) => FeaturePlaceholderPage(
                             title: feature.title,
                             icon: feature.icon,
                           ),

@@ -2,20 +2,20 @@ import 'dart:ui';
 
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:homelab_panel/app/theme/panel_theme.dart';
-import 'package:homelab_panel/features/dashboard/presentation/dashboard_screen.dart';
-import 'package:homelab_panel/features/launcher/presentation/launcher_screen.dart';
+import 'package:homelab_panel/pages/apps_page.dart';
+import 'package:homelab_panel/pages/overview_page.dart';
+import 'package:homelab_panel/theme/panel_theme.dart';
 
 /// 两个一级页面共用的外壳：负责切换 Tab 和显示底部悬浮切换栏。
 /// 选中的 Tab 会变化，因此这里使用 StatefulWidget。
-class PanelShell extends StatefulWidget {
-  const PanelShell({super.key});
+class TabShell extends StatefulWidget {
+  const TabShell({super.key});
 
   @override
-  State<PanelShell> createState() => _PanelShellState();
+  State<TabShell> createState() => _TabShellState();
 }
 
-class _PanelShellState extends State<PanelShell> {
+class _TabShellState extends State<TabShell> {
   // 0 = 应用，1 = 总览；setState 更新它时，Flutter 会重新执行 build。
   int _selectedTab = 0;
 
@@ -36,7 +36,7 @@ class _PanelShellState extends State<PanelShell> {
               // 例如切到总览再回来，应用页的滚动位置不会从头开始。
               IndexedStack(
                 index: _selectedTab,
-                children: const [LauncherScreen(), DashboardScreen()],
+                children: const [AppsPage(), OverviewPage()],
               ),
               Positioned(
                 left: 16,
