@@ -116,6 +116,79 @@ void main() {
     expect(find.byKey(const ValueKey('grid-lights')), findsOneWidget);
   });
 
+  testWidgets('reorders desktop apps and restores their positions', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(1200, 800);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+
+    await tester.pumpWidget(const HomeLabPanelApp());
+    await tester.pumpAndSettle();
+    await _longPressDrag(
+      tester,
+      find.byKey(const ValueKey('grid-lights')),
+      find.byKey(const ValueKey('grid-slot-2')),
+    );
+    expect(
+      tester.getCenter(find.byKey(const ValueKey('grid-lights'))).dx,
+      greaterThan(
+        tester.getCenter(find.byKey(const ValueKey('grid-curtains'))).dx,
+      ),
+    );
+    final saved = await SharedPreferencesAsync().getStringList(
+      'launcher.appOrder.v1',
+    );
+    expect(saved?.take(4).toList(), ['climate', 'curtains', 'lights', 'music']);
+
+    await tester.pumpWidget(const SizedBox.shrink());
+    await tester.pumpWidget(const HomeLabPanelApp());
+    await tester.pumpAndSettle();
+    expect(
+      tester.getCenter(find.byKey(const ValueKey('grid-lights'))).dx,
+      greaterThan(
+        tester.getCenter(find.byKey(const ValueKey('grid-curtains'))).dx,
+      ),
+    );
+  });
+
+  testWidgets('dragging to the page edge moves an app to another page', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(1200, 800);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+
+    await tester.pumpWidget(const HomeLabPanelApp());
+    await tester.pumpAndSettle();
+    final source = find.byKey(const ValueKey('grid-lights'));
+    final gesture = await tester.startGesture(tester.getCenter(source));
+    await tester.pump(const Duration(milliseconds: 700));
+    final page = tester.getRect(find.byType(PageView));
+    await gesture.moveTo(Offset(page.right - 16, page.center.dy));
+    await tester.pump(const Duration(milliseconds: 600));
+    await tester.pumpAndSettle();
+    expect(find.byKey(const ValueKey('grid-settings')), findsOneWidget);
+
+    await gesture.moveTo(
+      tester.getCenter(find.byKey(const ValueKey('grid-slot-8'))),
+    );
+    await tester.pump(const Duration(milliseconds: 50));
+    await gesture.up();
+    await tester.pumpAndSettle();
+    expect(find.byKey(const ValueKey('grid-lights')), findsOneWidget);
+    // 插入第 9 格后，原来第 9 格的设置会顺移到上一页末尾。
+    expect(find.byKey(const ValueKey('grid-settings')), findsNothing);
+    expect(
+      (await SharedPreferencesAsync().getStringList(
+        'launcher.appOrder.v1',
+      ))?.last,
+      'lights',
+    );
+  });
+
   testWidgets('can reach later apps on a narrow screen', (tester) async {
     tester.view.physicalSize = const Size(390, 700);
     tester.view.devicePixelRatio = 1;

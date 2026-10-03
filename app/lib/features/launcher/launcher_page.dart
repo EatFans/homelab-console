@@ -1,13 +1,16 @@
+import 'dart:async';
 import 'dart:math' as math;
 import 'dart:ui';
 
+import 'package:flutter/foundation.dart' show listEquals;
 import 'package:flutter/material.dart';
 import 'package:homelab_panel/app/app_feature.dart';
+import 'package:homelab_panel/features/launcher/app_order_storage.dart';
 import 'package:homelab_panel/features/launcher/dock_storage.dart';
 import 'package:homelab_panel/theme/panel_theme.dart';
 
 /// 类似手机桌面的应用入口：横向翻页，底部固定常用应用栏。
-/// 长按图标可拖进常用栏，也可从常用栏拖回上方的应用区域。
+/// 长按可调整桌面位置、拖进常用栏，或从常用栏拖回桌面。
 class LauncherPage extends StatefulWidget {
   const LauncherPage({super.key, required this.features});
 
@@ -21,23 +24,33 @@ class _LauncherPageState extends State<LauncherPage> {
   static const _dockSize = 5;
 
   final _dockStorage = DockStorage();
+  final _appOrderStorage = AppOrderStorage();
   final _pageController = PageController();
+  final _pageAreaKey = GlobalKey();
 
   // null 表示空位。初次使用预置三个入口，剩余两个位置可直接拖入。
   List<String?> _dockSlots = ['rooms', 'devices', 'scenes', null, null];
+  late List<String> _appOrder;
   Future<void> _saveQueue = Future<void>.value();
-  bool _dockEdited = false;
+  bool _layoutEdited = false;
+  Timer? _pageTurnTimer;
+  int? _pageTurnDirection;
   int _currentPage = 0;
   int _pageSize = 8;
 
   @override
   void initState() {
     super.initState();
-    _loadDock();
+    _appOrder = [
+      for (final feature in widget.features)
+        if (!_dockSlots.contains(feature.id)) feature.id,
+    ];
+    _loadLayout();
   }
 
   @override
   void dispose() {
+    _cancelPageTurn();
     _pageController.dispose();
     super.dispose();
   }
@@ -50,38 +63,61 @@ class _LauncherPageState extends State<LauncherPage> {
   }
 
   List<AppFeature> get _pageFeatures => [
-    for (final feature in widget.features)
-      if (!_dockSlots.contains(feature.id)) feature,
+    for (final id in _appOrder)
+      if (_featureById(id) case final feature?) feature,
   ];
 
-  Future<void> _loadDock() async {
+  Future<void> _loadLayout() async {
     try {
-      final saved = await _dockStorage.read();
-      if (!mounted || _dockEdited || saved == null) return;
+      final savedDock = await _dockStorage.read();
+      final savedOrder = await _appOrderStorage.read();
+      if (!mounted || _layoutEdited) return;
 
-      final slots = List<String?>.filled(_dockSize, null);
-      final usedIds = <String>{};
-      for (var index = 0; index < math.min(saved.length, _dockSize); index++) {
-        final id = saved[index];
-        if (_featureById(id) != null && usedIds.add(id)) {
-          slots[index] = id;
+      final slots = savedDock == null
+          ? List<String?>.from(_dockSlots)
+          : List<String?>.filled(_dockSize, null);
+      if (savedDock != null) {
+        final usedIds = <String>{};
+        for (
+          var index = 0;
+          index < math.min(savedDock.length, _dockSize);
+          index++
+        ) {
+          final id = savedDock[index];
+          if (_featureById(id) != null && usedIds.add(id)) {
+            slots[index] = id;
+          }
         }
       }
-      setState(() => _dockSlots = slots);
+      // 忽略已经删除或重复的入口，新加入的功能自动排在桌面末尾。
+      final order = <String>[];
+      for (final id in [...?savedOrder, ...widget.features.map((f) => f.id)]) {
+        if (!slots.contains(id) &&
+            _featureById(id) != null &&
+            !order.contains(id)) {
+          order.add(id);
+        }
+      }
+      setState(() {
+        _dockSlots = slots;
+        _appOrder = order;
+      });
       _clampCurrentPage();
     } catch (error) {
-      debugPrint('读取常用应用栏失败：$error');
+      debugPrint('读取桌面排列失败：$error');
     }
   }
 
-  void _saveDock() {
-    final snapshot = List<String?>.from(_dockSlots);
-    // 顺序写入，避免用户快速拖动几次后，较早的写入覆盖最新顺序。
+  void _saveLayout() {
+    final dockSnapshot = List<String?>.from(_dockSlots);
+    final orderSnapshot = List<String>.from(_appOrder);
+    // 连续拖动时顺序写入，避免较早的异步写入覆盖最新排列。
     _saveQueue = _saveQueue.then((_) async {
       try {
-        await _dockStorage.write(snapshot);
+        await _dockStorage.write(dockSnapshot);
+        await _appOrderStorage.write(orderSnapshot);
       } catch (error) {
-        debugPrint('保存常用应用栏失败：$error');
+        debugPrint('保存桌面排列失败：$error');
       }
     });
   }
@@ -97,9 +133,24 @@ class _LauncherPageState extends State<LauncherPage> {
     if (previousIndex >= 0) next[previousIndex] = displaced;
     next[targetIndex] = id;
 
-    _dockEdited = true;
-    setState(() => _dockSlots = next);
-    _saveDock();
+    final order = List<String>.from(_appOrder);
+    if (previousIndex < 0) {
+      final gridIndex = order.indexOf(id);
+      if (gridIndex >= 0) {
+        if (displaced == null) {
+          order.removeAt(gridIndex);
+        } else {
+          order[gridIndex] = displaced;
+        }
+      }
+    }
+
+    _layoutEdited = true;
+    setState(() {
+      _dockSlots = next;
+      _appOrder = order;
+    });
+    _saveLayout();
     _clampCurrentPage();
   }
 
@@ -107,9 +158,85 @@ class _LauncherPageState extends State<LauncherPage> {
     final index = _dockSlots.indexOf(id);
     if (index < 0) return;
     final next = List<String?>.from(_dockSlots)..[index] = null;
-    _dockEdited = true;
-    setState(() => _dockSlots = next);
-    _saveDock();
+    // 松在图标间的空白处时，按初始入口顺序找到邻近位置。
+    // 这样从常用栏移回桌面后，入口仍容易在原来的页面找到。
+    final order = List<String>.from(_appOrder);
+    final catalogIndex = widget.features.indexWhere(
+      (feature) => feature.id == id,
+    );
+    final insertAt = order.indexWhere(
+      (otherId) =>
+          widget.features.indexWhere((feature) => feature.id == otherId) >
+          catalogIndex,
+    );
+    order.insert(insertAt < 0 ? order.length : insertAt, id);
+    _layoutEdited = true;
+    setState(() {
+      _dockSlots = next;
+      _appOrder = order;
+    });
+    _saveLayout();
+  }
+
+  void _moveToGrid(String id, int targetIndex) {
+    if (_featureById(id) == null) return;
+    final order = List<String>.from(_appOrder)..remove(id);
+    order.insert(targetIndex.clamp(0, order.length), id);
+    final dock = List<String?>.from(_dockSlots);
+    final dockIndex = dock.indexOf(id);
+    if (dockIndex >= 0) dock[dockIndex] = null;
+    if (dockIndex < 0 && listEquals(order, _appOrder)) return;
+
+    _layoutEdited = true;
+    setState(() {
+      _dockSlots = dock;
+      _appOrder = order;
+    });
+    _saveLayout();
+    _clampCurrentPage();
+  }
+
+  void _cancelPageTurn() {
+    _pageTurnTimer?.cancel();
+    _pageTurnTimer = null;
+    _pageTurnDirection = null;
+  }
+
+  void _onDragUpdate(DragUpdateDetails details) {
+    final area = _pageAreaKey.currentContext?.findRenderObject();
+    if (area is! RenderBox || !_pageController.hasClients) return;
+    final point = area.globalToLocal(details.globalPosition);
+    final pageCount = math.max(
+      1,
+      (_appOrder.length + _pageSize - 1) ~/ _pageSize,
+    );
+    final direction = point.dy >= 0 && point.dy <= area.size.height
+        ? point.dx < 48
+              ? -1
+              : point.dx > area.size.width - 48
+              ? 1
+              : 0
+        : 0;
+    if (direction == 0 ||
+        _currentPage + direction < 0 ||
+        _currentPage + direction >= pageCount) {
+      _cancelPageTurn();
+      return;
+    }
+    if (_pageTurnDirection == direction) return;
+    _cancelPageTurn();
+    _pageTurnDirection = direction;
+    // 手指在页边停留片刻才翻页，避免经过边缘时误触。
+    _pageTurnTimer = Timer(const Duration(milliseconds: 550), () {
+      _pageTurnTimer = null;
+      _pageTurnDirection = null;
+      if (!mounted || !_pageController.hasClients) return;
+      _pageController.animateToPage(
+        _currentPage + direction,
+        duration: const Duration(milliseconds: 240),
+        curve: Curves.easeOut,
+      );
+    });
   }
 
   void _clampCurrentPage() {
@@ -166,6 +293,7 @@ class _LauncherPageState extends State<LauncherPage> {
                     // DragTarget 覆盖整个分页区：把常用栏图标拖回这里即可移出。
                     Expanded(
                       child: DragTarget<String>(
+                        key: _pageAreaKey,
                         onWillAcceptWithDetails: (details) =>
                             _dockSlots.contains(details.data),
                         onAcceptWithDetails: (details) =>
@@ -174,6 +302,7 @@ class _LauncherPageState extends State<LauncherPage> {
                           children: [
                             PageView.builder(
                               controller: _pageController,
+                              allowImplicitScrolling: true,
                               itemCount: pageCount,
                               onPageChanged: (page) =>
                                   setState(() => _currentPage = page),
@@ -184,7 +313,11 @@ class _LauncherPageState extends State<LauncherPage> {
                                   features.length,
                                 );
                                 final items = features.sublist(start, end);
-                                return _buildGridPage(items, columns);
+                                // 翻页时保留拖拽起点，否则旧页销毁会提前结束拖动。
+                                return _KeepAliveGridPage(
+                                  key: ValueKey('launcher-page-$page'),
+                                  child: _buildGridPage(items, columns, start),
+                                );
                               },
                             ),
                             if (candidates.isNotEmpty)
@@ -254,7 +387,7 @@ class _LauncherPageState extends State<LauncherPage> {
     );
   }
 
-  Widget _buildGridPage(List<AppFeature> features, int columns) {
+  Widget _buildGridPage(List<AppFeature> features, int columns, int start) {
     return Padding(
       padding: const EdgeInsets.fromLTRB(18, 16, 18, 0),
       child: Center(
@@ -263,7 +396,7 @@ class _LauncherPageState extends State<LauncherPage> {
           child: GridView.builder(
             physics: const NeverScrollableScrollPhysics(),
             padding: EdgeInsets.zero,
-            itemCount: features.length,
+            itemCount: _pageSize,
             gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
               crossAxisCount: columns,
               mainAxisExtent: 154,
@@ -271,22 +404,49 @@ class _LauncherPageState extends State<LauncherPage> {
               crossAxisSpacing: 12,
             ),
             itemBuilder: (context, index) {
-              final feature = features[index];
-              return LayoutBuilder(
-                builder: (context, constraints) => LongPressDraggable<String>(
-                  key: ValueKey('grid-${feature.id}'),
-                  data: feature.id,
-                  // 默认锚点以整个网格单元计算，因此预览也要保持同样尺寸。
-                  // 只预览小图标会让它在开始拖动时向左上方跳动。
-                  feedback: _dragFeedback(feature, constraints.biggest),
-                  childWhenDragging: Opacity(
-                    opacity: 0.3,
-                    child: _AppTile(feature: feature, onTap: () {}),
+              final feature = index < features.length ? features[index] : null;
+              return DragTarget<String>(
+                key: ValueKey('grid-slot-${start + index}'),
+                onWillAcceptWithDetails: (details) =>
+                    _featureById(details.data) != null,
+                onAcceptWithDetails: (details) =>
+                    _moveToGrid(details.data, start + index),
+                builder: (context, candidates, rejected) => Container(
+                  decoration: BoxDecoration(
+                    color: candidates.isNotEmpty
+                        ? PanelPalette.of(
+                            context,
+                          ).accent.withValues(alpha: 0.12)
+                        : Colors.transparent,
+                    borderRadius: BorderRadius.circular(22),
                   ),
-                  child: _AppTile(
-                    feature: feature,
-                    onTap: () => _openFeature(feature),
-                  ),
+                  child: feature == null
+                      ? const SizedBox.expand()
+                      : LayoutBuilder(
+                          builder: (context, constraints) =>
+                              LongPressDraggable<String>(
+                                key: ValueKey('grid-${feature.id}'),
+                                data: feature.id,
+                                // 预览与原网格单元同尺寸，长按时图标不会跳向左上方。
+                                feedback: _dragFeedback(
+                                  feature,
+                                  constraints.biggest,
+                                ),
+                                onDragUpdate: _onDragUpdate,
+                            onDragEnd: (_) => _cancelPageTurn(),
+                                childWhenDragging: Opacity(
+                                  opacity: 0.3,
+                                  child: _AppTile(
+                                    feature: feature,
+                                    onTap: () {},
+                                  ),
+                                ),
+                                child: _AppTile(
+                                  feature: feature,
+                                  onTap: () => _openFeature(feature),
+                                ),
+                              ),
+                        ),
                 ),
               );
             },
@@ -396,6 +556,8 @@ class _LauncherPageState extends State<LauncherPage> {
                   builder: (context, constraints) => LongPressDraggable<String>(
                     key: ValueKey('dock-${feature.id}'),
                     data: feature.id,
+                    onDragUpdate: _onDragUpdate,
+                    onDragEnd: (_) => _cancelPageTurn(),
                     feedback: _dragFeedback(
                       feature,
                       constraints.biggest,
@@ -453,6 +615,28 @@ class _AppTile extends StatelessWidget {
         ),
       ),
     );
+  }
+}
+
+/// PageView 切到下一页时仍保留旧页，让长按拖拽可以跨页继续。
+class _KeepAliveGridPage extends StatefulWidget {
+  const _KeepAliveGridPage({super.key, required this.child});
+
+  final Widget child;
+
+  @override
+  State<_KeepAliveGridPage> createState() => _KeepAliveGridPageState();
+}
+
+class _KeepAliveGridPageState extends State<_KeepAliveGridPage>
+    with AutomaticKeepAliveClientMixin {
+  @override
+  bool get wantKeepAlive => true;
+
+  @override
+  Widget build(BuildContext context) {
+    super.build(context);
+    return widget.child;
   }
 }
 
