@@ -1,16 +1,16 @@
-# app
+# HomeLab Panel
 
-A HomeLab Console
+本目录是 HomeLab 的 Flutter 平板端工程。它计划通过家庭局域网中的 HomeLab Hub 查看设备状态并发送控制指令。
 
-## Getting Started
+目前仍处于原型阶段：应用可以运行，但界面是 Flutter 示例计数器，尚未实现设备控制或与 Hub 通信。
 
-This project is a starting point for a Flutter application.
+## 本地运行
 
-A few resources to get you started if this is your first Flutter project:
+在本目录执行：
 
-- [Lab: Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Cookbook: Useful Flutter samples](https://docs.flutter.dev/cookbook)
+```sh
+flutter pub get
+flutter run
+```
 
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+整个项目的定位和各端职责见[仓库 README](../README.md)。
