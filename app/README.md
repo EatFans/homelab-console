@@ -52,4 +52,4 @@ flutter build apk --debug
 
 计划按「连接中枢 → 读取设备状态 → 发送控制指令」的顺序开发。页面负责展示与输入，功能状态逻辑处理加载、断线及操作结果；Repository 管理数据和刷新，Service 与 Hub 通信。Hub 是设备状态的权威来源，页面不应只因按钮被点击就显示操作成功。
 
-接口协议、地址发现和认证方式目前尚未确定，因此工程里还没有对应的依赖、配置文件或占位实现。目录演进、参考项目和具体开发顺序见[Flutter 工程规划](../docs/flutter-app-architecture.md)。
+接口协议、地址发现和认证方式目前尚未确定，因此工程里还没有对应的依赖、配置文件或占位实现。页面划分与车机风格的交互原则见[页面与交互规划](../docs/panel-page-plan.md)；目录演进和开发顺序见[Flutter 工程规划](../docs/flutter-app-architecture.md)。
