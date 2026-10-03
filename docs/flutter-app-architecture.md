@@ -4,7 +4,7 @@
 
 `app/` 是运行在家庭平板上的 Flutter 控制端。设备接入、自动化规则和状态的权威数据由局域网内的 HomeLab Hub 负责；Panel 负责展示状态、发出控制请求，以及清楚地呈现连接和操作结果。
 
-目前已有可运行的单个「应用」一级页面、可滚动的功能入口和占位功能页。Hub、通信协议和设备模型尚未确定，因此不提前引入网络、状态管理、路由或代码生成依赖。具体页面划分见[页面与交互规划](panel-page-plan.md)。
+目前已有可运行的横向分页应用桌面、底部常用应用栏和占位功能页。常用栏使用 `shared_preferences` 在本机保存图标位置。Hub、通信协议和设备模型尚未确定，因此不提前引入网络、复杂状态管理、路由或代码生成依赖。具体页面划分见[页面与交互规划](panel-page-plan.md)。
 
 ## 参考项目与取舍
 
@@ -16,7 +16,7 @@
 
 ## 当前目录
 
-目前只有一个一级页面和一个占位功能页。页面集中在 `pages/`，主题单独放在 `theme/`，这样打开 `lib/` 就能直接找到代码：
+目前只有一个应用桌面和一个占位功能页。页面集中在 `pages/`，主题单独放在 `theme/`，这样打开 `lib/` 就能直接找到代码：
 
 ```text
 app/
@@ -27,15 +27,14 @@ app/
 │   ├── app.dart                     # MaterialApp 与初始页面
 │   ├── theme/panel_theme.dart       # 浅色和深色主题
 │   └── pages/
-│       ├── tab_shell.dart           # 单个悬浮 Tab 与页面外壳
-│       ├── apps_page.dart           # 应用入口
+│       ├── apps_page.dart           # 横向分页、拖拽与常用栏
 │       └── feature_placeholder_page.dart # 入口占位页
-├── test/                             # 入口导航与滚动测试
+├── test/                             # 分页、拖拽与入口导航测试
 ├── analysis_options.yaml
 └── pubspec.yaml
 ```
 
-阅读路径是 `main.dart` → `app.dart` → `tab_shell.dart` → 各页面。想改某个界面，先去同名的页面文件；想改全局配色，去 `theme/`。`android/`、`ios/` 保留给平台配置和打包，日常 Flutter 页面开发主要在 `lib/`。
+阅读路径是 `main.dart` → `app.dart` → `apps_page.dart`。想改应用桌面，去 `pages/`；想改全局配色，去 `theme/`。`android/`、`ios/` 保留给平台配置和打包，日常 Flutter 页面开发主要在 `lib/`。
 
 ## 什么时候再拆目录
 
