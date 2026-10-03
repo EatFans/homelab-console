@@ -29,6 +29,8 @@ app/
 
 启动顺序是 `main.dart` 调用 `runApp`，`HomeLabPanelApp` 创建 `MaterialApp`，再显示 `PanelShell`。`PanelShell` 保留两个一级页面的状态，悬浮切换栏负责切换；应用入口使用标准页面导航打开占位功能页。数据层和页面状态层要等 Hub API 明确后才会加入。
 
+刚接触 Flutter 时，建议按 `main.dart` → `app/app.dart` → `panel_shell.dart` → `launcher_screen.dart` 的顺序读代码。`Widget` 是界面组件，`build` 返回组件树；`StatefulWidget` 用于保存会变化的值，调用 `setState` 后 Flutter 会重新构建相关界面。应用入口通过 `Navigator.push` 打开功能页，功能页通过 `Navigator.pop` 返回。关键位置已在源码中加入中文注释。
+
 `pubspec.yaml` 中的 `homelab_panel` 是 Dart 包名；设备桌面上显示的是 **HomeLab Panel**。Android 和 iOS 当前的应用标识符仍是 `cn.eatfan.app`，正式分发前需要确认是否更换；它与显示名称是两回事。
 
 ## 本地运行与检查

@@ -6,6 +6,8 @@ import 'package:homelab_panel/app/theme/panel_theme.dart';
 import 'package:homelab_panel/features/dashboard/presentation/dashboard_screen.dart';
 import 'package:homelab_panel/features/launcher/presentation/launcher_screen.dart';
 
+/// 两个一级页面共用的外壳：负责切换 Tab 和显示底部悬浮切换栏。
+/// 选中的 Tab 会变化，因此这里使用 StatefulWidget。
 class PanelShell extends StatefulWidget {
   const PanelShell({super.key});
 
@@ -14,6 +16,7 @@ class PanelShell extends StatefulWidget {
 }
 
 class _PanelShellState extends State<PanelShell> {
+  // 0 = 应用，1 = 总览；setState 更新它时，Flutter 会重新执行 build。
   int _selectedTab = 0;
 
   @override
@@ -21,12 +24,16 @@ class _PanelShellState extends State<PanelShell> {
     return Scaffold(
       body: LayoutBuilder(
         builder: (context, constraints) {
+          // 某些设备启动的首帧可能暂时给出 0 尺寸，此时先不布局页面。
           if (constraints.maxWidth <= 0 || constraints.maxHeight <= 0) {
             return const SizedBox.shrink();
           }
 
+          // Stack 让悬浮栏盖在页面内容上方，而不是占用独立的底栏高度。
           return Stack(
             children: [
+              // IndexedStack 只显示当前 Tab，但保留其他 Tab 的组件状态。
+              // 例如切到总览再回来，应用页的滚动位置不会从头开始。
               IndexedStack(
                 index: _selectedTab,
                 children: const [LauncherScreen(), DashboardScreen()],
@@ -36,6 +43,7 @@ class _PanelShellState extends State<PanelShell> {
                 right: 16,
                 bottom: 0,
                 child: SafeArea(
+                  // 避开设备底部手势区域，并额外留出 18dp 的间距。
                   top: false,
                   minimum: const EdgeInsets.only(bottom: 18),
                   child: Center(child: _buildFloatingTabBar()),
@@ -51,6 +59,7 @@ class _PanelShellState extends State<PanelShell> {
   Widget _buildFloatingTabBar() {
     final palette = PanelPalette.of(context);
 
+    // ClipRRect 限制模糊范围；BackdropFilter 只模糊悬浮栏背后的内容。
     return ClipRRect(
       borderRadius: BorderRadius.circular(32),
       child: BackdropFilter(
@@ -70,12 +79,14 @@ class _PanelShellState extends State<PanelShell> {
             ],
           ),
           child: CupertinoSlidingSegmentedControl<int>(
+            // 复用 iOS 风格的分段切换控件，值与 IndexedStack 的索引一致。
             groupValue: _selectedTab,
             backgroundColor: Colors.transparent,
             thumbColor: palette.surfaceMuted,
             padding: EdgeInsets.zero,
             onValueChanged: (value) {
               if (value != null) {
+                // 通知 Flutter 重建当前组件，显示新 Tab 并更新选中样式。
                 setState(() => _selectedTab = value);
               }
             },

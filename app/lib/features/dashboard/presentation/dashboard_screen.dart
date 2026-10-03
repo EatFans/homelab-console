@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:homelab_panel/app/theme/panel_theme.dart';
 
+/// “总览”Tab 的占位页面；家庭状态和常用控制尚未接入。
 class DashboardScreen extends StatelessWidget {
   const DashboardScreen({super.key});
 

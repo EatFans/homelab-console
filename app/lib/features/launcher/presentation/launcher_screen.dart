@@ -2,9 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:homelab_panel/app/theme/panel_theme.dart';
 import 'package:homelab_panel/features/launcher/presentation/feature_placeholder_screen.dart';
 
+/// “应用”Tab：展示功能入口。这里尚未接入 Hub，入口数据暂时写在本地。
 class LauncherScreen extends StatelessWidget {
   const LauncherScreen({super.key});
 
+  // 每个入口只有名称和图标；以后接入真实功能时可逐步替换导航目标。
   static const _features = [
     _FeatureEntry('房间', Icons.meeting_room_rounded),
     _FeatureEntry('设备', Icons.devices_rounded),
@@ -25,16 +27,21 @@ class LauncherScreen extends StatelessWidget {
     return SafeArea(
       child: Center(
         child: ConstrainedBox(
+          // 在宽屏上限制内容宽度，避免图标网格被拉得太散。
           constraints: const BoxConstraints(maxWidth: 1200),
           child: CustomScrollView(
+            // 页面重新创建时，Flutter 可借此标识保存的滚动位置。
             key: const PageStorageKey('launcher-scroll'),
+            // sliver 是 Flutter 可滚动区域中的一段内容：先放标题，再放网格。
             slivers: [
               SliverPadding(
                 padding: const EdgeInsets.fromLTRB(28, 18, 28, 18),
                 sliver: SliverToBoxAdapter(child: _buildHeader(context)),
               ),
               SliverPadding(
+                // 底部留白，避免最后一行入口被悬浮 Tab 栏遮住。
                 padding: const EdgeInsets.fromLTRB(20, 0, 20, 144),
+                // builder 只按需创建网格项，入口变多后仍可保持滚动流畅。
                 sliver: SliverGrid.builder(
                   itemCount: _features.length,
                   gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
@@ -47,6 +54,7 @@ class LauncherScreen extends StatelessWidget {
                     final feature = _features[index];
                     return _FeatureTile(
                       feature: feature,
+                      // push 打开新页面；新页面中的 pop 会返回应用列表。
                       onTap: () => Navigator.of(context).push(
                         MaterialPageRoute<void>(
                           builder: (_) => FeaturePlaceholderScreen(
@@ -73,6 +81,7 @@ class LauncherScreen extends StatelessWidget {
       fontWeight: FontWeight.w700,
     );
 
+    // 标题和连接状态放在同一行，减少顶部提示占用的高度。
     return Row(
       children: [
         Text('应用', style: titleStyle),
@@ -119,6 +128,7 @@ class _FeatureTile extends StatelessWidget {
 
     return Material(
       color: Colors.transparent,
+      // InkWell 提供整块入口的点击区域和 Material 点击反馈。
       child: InkWell(
         onTap: onTap,
         borderRadius: BorderRadius.circular(24),

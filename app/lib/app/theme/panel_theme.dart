@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+/// 界面使用的语义色。页面按用途取色，而不是在每个组件中重复写颜色值。
+/// 例如 accent 表示主要交互色，warning 表示需要注意的状态。
 @immutable
 class PanelPalette {
   const PanelPalette({
@@ -30,6 +32,7 @@ class PanelPalette {
   final Color floatingBar;
   final Color shadow;
 
+  // 两套色值分别服务于浅色和深色外观；新增颜色时需要同时补齐两套。
   static const light = PanelPalette(
     canvas: Color(0xFFF5F7F9),
     surface: Color(0xFFFFFFFF),
@@ -61,10 +64,12 @@ class PanelPalette {
   );
 
   static PanelPalette of(BuildContext context) {
+    // context 能读到 MaterialApp 当前生效的主题。
     return Theme.of(context).brightness == Brightness.dark ? dark : light;
   }
 }
 
+/// 把上面的语义色转换为 Flutter Material 组件可使用的 ThemeData。
 class PanelTheme {
   const PanelTheme._();
 
@@ -72,6 +77,7 @@ class PanelTheme {
   static ThemeData get dark => _build(PanelPalette.dark, Brightness.dark);
 
   static ThemeData _build(PanelPalette palette, Brightness brightness) {
+    // ColorScheme 决定按钮等 Material 组件的默认颜色。
     final colorScheme =
         ColorScheme.fromSeed(
           seedColor: palette.accent,

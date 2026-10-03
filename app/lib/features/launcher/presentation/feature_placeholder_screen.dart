@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:homelab_panel/app/theme/panel_theme.dart';
 
+/// 功能入口的临时页面。复用同一个页面，通过 title/icon 区分入口。
+/// 后续接入具体功能时，再将对应入口替换成真实页面。
 class FeaturePlaceholderScreen extends StatelessWidget {
   const FeaturePlaceholderScreen({
     super.key,
@@ -50,6 +52,7 @@ class FeaturePlaceholderScreen extends StatelessWidget {
                 ),
                 const SizedBox(height: 28),
                 OutlinedButton.icon(
+                  // pop 关闭当前页面，回到上一个“应用”列表页面。
                   onPressed: () => Navigator.of(context).pop(),
                   icon: const Icon(Icons.arrow_back_rounded),
                   label: const Text('返回应用'),
