@@ -4,9 +4,9 @@ HomeLab Panel 是 [HomeLab](../README.md) 的 Flutter 平板控制端。家庭�
 
 ## 当前进度
 
-目前是一个**可运行的工程骨架**。启动后会看到标题为「控制中枢」的占位首页，页面提示「家庭中枢尚未接入」。这条提示是固定文案，不代表应用已经尝试连接 Hub。
+目前是一个**可运行的双 Tab 框架**。默认进入「应用」页，可上下滚动查看功能入口；底部悬浮切换栏可以在「应用」和「总览」之间切换。「总览」暂为占位页。
 
-Hub 服务端、设备列表、网络通信、配对和控制功能均尚未实现。现在没有需要填写的服务器地址，也没有可操作的模拟设备。
+点击任一应用图标会进入对应标题的占位功能页，并可返回应用列表。入口和「中枢尚未接入」均为界面骨架：Hub 服务端、网络通信、配对和设备控制尚未实现，当前没有真实设备数据。
 
 ## 工程结构
 
@@ -16,15 +16,17 @@ app/
 ├── ios/                                      iOS / iPadOS 平台工程
 ├── lib/
 │   ├── main.dart                             Flutter 启动入口
-│   ├── app/app.dart                          应用名称、主题和首页配置
-│   └── features/dashboard/presentation/
-│       └── dashboard_screen.dart             当前占位首页
+│   ├── app/app.dart                          应用名称和主题
+│   ├── app/presentation/panel_shell.dart     两个 Tab 与悬浮切换栏
+│   ├── features/launcher/presentation/       应用网格与入口占位页
+│   └── features/dashboard/presentation/      总览占位页
+├── test/panel_navigation_test.dart           Tab 与入口导航测试
 ├── analysis_options.yaml                     Dart 静态检查规则
 ├── pubspec.yaml                              包名、版本和依赖
 └── pubspec.lock                              已解析的依赖版本
 ```
 
-启动顺序是 `main.dart` 调用 `runApp`，`HomeLabPanelApp` 创建 `MaterialApp`，再显示 `DashboardScreen`。目前所有可见内容都在首页组件中；数据层和页面状态层要等 Hub API 明确后才会加入。
+启动顺序是 `main.dart` 调用 `runApp`，`HomeLabPanelApp` 创建 `MaterialApp`，再显示 `PanelShell`。`PanelShell` 保留两个一级页面的状态，悬浮切换栏负责切换；应用入口使用标准页面导航打开占位功能页。数据层和页面状态层要等 Hub API 明确后才会加入。
 
 `pubspec.yaml` 中的 `homelab_panel` 是 Dart 包名；设备桌面上显示的是 **HomeLab Panel**。Android 和 iOS 当前的应用标识符仍是 `cn.eatfan.app`，正式分发前需要确认是否更换；它与显示名称是两回事。
 
@@ -43,10 +45,11 @@ flutter run
 
 ```sh
 flutter analyze
+flutter test
 flutter build apk --debug
 ```
 
-原始计数器的模板测试已经移除；目前没有针对实际业务的测试。加入 Hub 通信和设备操作后，再为有业务逻辑的部分补充测试。
+现有测试检查 Tab 切换、功能入口打开和返回。加入 Hub 通信和设备操作后，再为实际业务逻辑补充测试。
 
 ## 后续如何接入 Hub
 

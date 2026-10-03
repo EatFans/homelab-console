@@ -4,7 +4,7 @@
 
 `app/` 是运行在家庭平板上的 Flutter 控制端。设备接入、自动化规则和状态的权威数据由局域网内的 HomeLab Hub 负责；Panel 负责展示状态、发出控制请求，以及清楚地呈现连接和操作结果。
 
-目前只有可运行的应用入口和占位首页。Hub、通信协议、设备模型和交互设计尚未确定，因此不提前引入网络、状态管理、路由或代码生成依赖。
+目前已有可运行的双 Tab 外壳、可滚动的应用入口和占位功能页。Hub、通信协议和设备模型尚未确定，因此不提前引入网络、状态管理、路由或代码生成依赖。具体页面划分见[页面与交互规划](panel-page-plan.md)。
 
 ## 参考项目与取舍
 
@@ -25,9 +25,12 @@ app/
 ├── lib/
 │   ├── main.dart                    # 启动入口
 │   ├── app/app.dart                 # MaterialApp、主题与应用级配置
-│   └── features/dashboard/
-│       └── presentation/
-│           └── dashboard_screen.dart
+│   ├── app/presentation/
+│   │   └── panel_shell.dart         # 一级 Tab 与悬浮切换栏
+│   └── features/
+│       ├── launcher/presentation/   # 应用入口与占位功能页
+│       └── dashboard/presentation/  # 总览占位页
+├── test/                             # Tab 与入口导航测试
 ├── analysis_options.yaml
 └── pubspec.yaml
 ```
@@ -37,6 +40,7 @@ app/
 ```text
 lib/
 ├── features/
+│   ├── launcher/presentation/      # 应用入口
 │   ├── dashboard/presentation/     # 家庭概览
 │   ├── hub_connection/presentation/# 发现、连接与连接状态
 │   └── devices/presentation/       # 设备列表、详情与操作
@@ -61,9 +65,9 @@ Hub 的 API、实时更新方式、发现机制、认证方式和版本兼容策
 ## 开发顺序
 
 1. **连接中枢**：确定最小 API 契约，先支持手动配置地址、连通性检查和明确的断线提示；局域网自动发现后续加入。
-2. **只读概览**：展示真实设备与房间状态，建立 Service → Repository → 页面状态 → UI 的完整链路。
-3. **设备控制**：加入指令执行结果、超时及失败反馈，再考虑乐观更新。
-4. **平板体验**：根据实际屏幕尺寸处理横竖屏、布局密度和触控目标，并补充连接异常场景。
-5. **质量保障**：为有逻辑的 Service、Repository 和页面状态补测试；为关键控制流程补端到端验证。
+2. **确定首页内容**：明确总览需要显示哪些真实状态、高频操作和异常信息，再替换当前占位页。
+3. **逐个实现应用入口**：优先接入真实设备与房间状态，建立 Service → Repository → 页面状态 → UI 的完整链路。
+4. **设备控制**：加入指令执行结果、超时及失败反馈，再考虑乐观更新。
+5. **平板体验与质量保障**：根据实际屏幕尺寸处理布局和触控目标，为有逻辑的 Service、Repository 和页面状态补测试。
 
 在明确真实需求前，不增加空的 `usecases/`、多环境入口、路由框架或完整状态管理框架。
