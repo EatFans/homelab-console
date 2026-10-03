@@ -94,8 +94,16 @@ Future<void> _longPressDrag(
   Finder source,
   Finder target,
 ) async {
+  final id = tester.widget<LongPressDraggable<String>>(source).data;
   final gesture = await tester.startGesture(tester.getCenter(source));
   await tester.pump(const Duration(milliseconds: 700));
+  final feedback = find.byKey(ValueKey('drag-feedback-$id'));
+  expect(feedback, findsOneWidget);
+  // 拖动开始时，预览仍应覆盖原单元，不能突然偏向左上方。
+  expect(
+    (tester.getCenter(feedback) - tester.getCenter(source)).distance,
+    lessThan(1),
+  );
   await gesture.moveTo(tester.getCenter(target));
   await tester.pump(const Duration(milliseconds: 50));
   await gesture.up();

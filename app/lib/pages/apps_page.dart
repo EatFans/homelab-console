@@ -290,17 +290,21 @@ class _AppsPageState extends State<AppsPage> {
             ),
             itemBuilder: (context, index) {
               final feature = features[index];
-              return LongPressDraggable<String>(
-                key: ValueKey('grid-${feature.id}'),
-                data: feature.id,
-                feedback: _dragFeedback(feature),
-                childWhenDragging: Opacity(
-                  opacity: 0.3,
-                  child: _AppTile(feature: feature, onTap: () {}),
-                ),
-                child: _AppTile(
-                  feature: feature,
-                  onTap: () => _openFeature(feature),
+              return LayoutBuilder(
+                builder: (context, constraints) => LongPressDraggable<String>(
+                  key: ValueKey('grid-${feature.id}'),
+                  data: feature.id,
+                  // 默认锚点以整个网格单元计算，因此预览也要保持同样尺寸。
+                  // 只预览小图标会让它在开始拖动时向左上方跳动。
+                  feedback: _dragFeedback(feature, constraints.biggest),
+                  childWhenDragging: Opacity(
+                    opacity: 0.3,
+                    child: _AppTile(feature: feature, onTap: () {}),
+                  ),
+                  child: _AppTile(
+                    feature: feature,
+                    onTap: () => _openFeature(feature),
+                  ),
                 ),
               );
             },
@@ -406,15 +410,21 @@ class _AppsPageState extends State<AppsPage> {
                     ),
                   ],
                 )
-              : LongPressDraggable<String>(
-                  key: ValueKey('dock-${feature.id}'),
-                  data: feature.id,
-                  feedback: _dragFeedback(feature),
-                  childWhenDragging: const SizedBox.expand(),
-                  child: _AppTile(
-                    feature: feature,
-                    compact: true,
-                    onTap: () => _openFeature(feature),
+              : LayoutBuilder(
+                  builder: (context, constraints) => LongPressDraggable<String>(
+                    key: ValueKey('dock-${feature.id}'),
+                    data: feature.id,
+                    feedback: _dragFeedback(
+                      feature,
+                      constraints.biggest,
+                      compact: true,
+                    ),
+                    childWhenDragging: const SizedBox.expand(),
+                    child: _AppTile(
+                      feature: feature,
+                      compact: true,
+                      onTap: () => _openFeature(feature),
+                    ),
                   ),
                 ),
         );
@@ -422,9 +432,19 @@ class _AppsPageState extends State<AppsPage> {
     );
   }
 
-  Widget _dragFeedback(_FeatureEntry feature) => Material(
+  Widget _dragFeedback(
+    _FeatureEntry feature,
+    Size sourceSize, {
+    bool compact = false,
+  }) => Material(
+    key: ValueKey('drag-feedback-${feature.id}'),
     color: Colors.transparent,
-    child: _AppIcon(feature: feature),
+    child: SizedBox.fromSize(
+      size: sourceSize,
+      child: Center(
+        child: _AppIcon(feature: feature, compact: compact),
+      ),
+    ),
   );
 }
 
