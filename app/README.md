@@ -1,6 +1,6 @@
 # app
 
-HomeLab Console App
+A HomeLab Console
 
 ## Getting Started
 
