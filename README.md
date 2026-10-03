@@ -17,7 +17,7 @@ HomeLab 是一个面向家庭局域网的智能家居项目。家庭服务器作
 └── docs/   # 跨工程的设计与规划文档
 ```
 
-目前仓库只有平板端的 Flutter 工程，已具备双 Tab 切换、可滚动的应用入口和占位功能页；尚未接入家庭设备或 Hub。服务器端的技术选型、目录和部署方式也尚未确定。平板端的后续工程安排见[Flutter 工程规划](docs/flutter-app-architecture.md)，界面方向见[页面与交互规划](docs/panel-page-plan.md)及[视觉主题](docs/panel-theme.md)。
+目前仓库只有平板端的 Flutter 工程，已具备单个「应用」一级页面、可滚动的功能入口和占位功能页；尚未接入家庭设备或 Hub。服务器端的技术选型、目录和部署方式也尚未确定。平板端的后续工程安排见[Flutter 工程规划](docs/flutter-app-architecture.md)，界面方向见[页面与交互规划](docs/panel-page-plan.md)及[视觉主题](docs/panel-theme.md)。
 
 ## 运行现有平板端
 

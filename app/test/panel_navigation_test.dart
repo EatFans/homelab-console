@@ -1,56 +1,103 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:homelab_panel/app.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:shared_preferences_platform_interface/in_memory_shared_preferences_async.dart';
+import 'package:shared_preferences_platform_interface/shared_preferences_async_platform_interface.dart';
 
 void main() {
-  // 模拟 1200×800 的平板屏幕，检查 Tab 切换、打开功能页和返回。
-  testWidgets('switches tabs and opens a feature page', (tester) async {
+  setUp(() {
+    // 每个测试都从独立的空存储开始，避免常用栏配置互相影响。
+    SharedPreferencesAsyncPlatform.instance =
+        InMemorySharedPreferencesAsync.empty();
+  });
+
+  testWidgets('swipes between app pages and opens an app', (tester) async {
     tester.view.physicalSize = const Size(1200, 800);
     tester.view.devicePixelRatio = 1;
     addTearDown(tester.view.resetPhysicalSize);
     addTearDown(tester.view.resetDevicePixelRatio);
 
-    // pumpWidget 把 App 放进测试环境；pumpAndSettle 等待动画结束。
     await tester.pumpWidget(const HomeLabPanelApp());
-    expect(find.text('中枢未连接'), findsOneWidget);
-
-    await tester.tap(find.text('总览'));
     await tester.pumpAndSettle();
-    expect(find.text('总览页面'), findsOneWidget);
+    expect(find.byKey(const ValueKey('dock-rooms')), findsOneWidget);
+    expect(find.byKey(const ValueKey('grid-lights')), findsOneWidget);
 
-    await tester.tap(find.text('应用'));
+    await tester.fling(find.byType(PageView), const Offset(-700, 0), 1200);
     await tester.pumpAndSettle();
-    expect(find.text('中枢未连接'), findsOneWidget);
+    expect(find.byKey(const ValueKey('grid-settings')), findsOneWidget);
 
-    await tester.tap(find.text('房间'));
+    await tester.tap(find.byKey(const ValueKey('grid-settings')));
     await tester.pumpAndSettle();
     expect(find.text('功能页面已预留，等待家庭中枢接入。'), findsOneWidget);
 
     await tester.tap(find.text('返回应用'));
     await tester.pumpAndSettle();
-    expect(find.text('中枢未连接'), findsOneWidget);
+    expect(find.byKey(const ValueKey('grid-settings')), findsOneWidget);
   });
 
-  testWidgets('scrolls to lower app entries on a narrow screen', (
+  testWidgets('long press adds and removes a dock app and saves it', (
     tester,
   ) async {
-    // 窄屏下入口需要滚动才能看到，顺便验证底部入口仍可点击。
+    tester.view.physicalSize = const Size(1200, 800);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+
+    await tester.pumpWidget(const HomeLabPanelApp());
+    await tester.pumpAndSettle();
+
+    await _longPressDrag(
+      tester,
+      find.byKey(const ValueKey('grid-lights')),
+      find.byKey(const ValueKey('dock-slot-3')),
+    );
+    expect(find.byKey(const ValueKey('dock-lights')), findsOneWidget);
+    expect(find.byKey(const ValueKey('grid-lights')), findsNothing);
+
+    final saved = await SharedPreferencesAsync().getStringList(
+      'launcher.dock.v1',
+    );
+    expect(saved, ['rooms', 'devices', 'scenes', 'lights', '']);
+
+    // 重新创建 App，确认常用栏从本地存储恢复。
+    await tester.pumpWidget(const SizedBox.shrink());
+    await tester.pumpWidget(const HomeLabPanelApp());
+    await tester.pumpAndSettle();
+    expect(find.byKey(const ValueKey('dock-lights')), findsOneWidget);
+
+    await _longPressDrag(
+      tester,
+      find.byKey(const ValueKey('dock-lights')),
+      find.byType(PageView),
+    );
+    expect(find.byKey(const ValueKey('dock-lights')), findsNothing);
+    expect(find.byKey(const ValueKey('grid-lights')), findsOneWidget);
+  });
+
+  testWidgets('can reach later apps on a narrow screen', (tester) async {
     tester.view.physicalSize = const Size(390, 700);
     tester.view.devicePixelRatio = 1;
     addTearDown(tester.view.resetPhysicalSize);
     addTearDown(tester.view.resetDevicePixelRatio);
 
     await tester.pumpWidget(const HomeLabPanelApp());
-    await tester.scrollUntilVisible(
-      find.text('设置'),
-      280,
-      scrollable: find.byType(Scrollable).first,
-    );
-    await tester.drag(find.byType(CustomScrollView), const Offset(0, -220));
     await tester.pumpAndSettle();
-    await tester.tap(find.text('设置'));
+    await tester.fling(find.byType(PageView), const Offset(-300, 0), 1000);
     await tester.pumpAndSettle();
-
-    expect(find.text('功能页面已预留，等待家庭中枢接入。'), findsOneWidget);
+    expect(find.byKey(const ValueKey('grid-settings')), findsOneWidget);
   });
+}
+
+Future<void> _longPressDrag(
+  WidgetTester tester,
+  Finder source,
+  Finder target,
+) async {
+  final gesture = await tester.startGesture(tester.getCenter(source));
+  await tester.pump(const Duration(milliseconds: 700));
+  await gesture.moveTo(tester.getCenter(target));
+  await tester.pump(const Duration(milliseconds: 50));
+  await gesture.up();
+  await tester.pumpAndSettle();
 }

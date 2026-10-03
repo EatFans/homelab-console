@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:homelab_panel/pages/tab_shell.dart';
+import 'package:homelab_panel/pages/apps_page.dart';
 import 'package:homelab_panel/theme/panel_theme.dart';
 
 /// App 的根组件：统一配置名称、主题和第一个页面。
@@ -17,8 +17,8 @@ class HomeLabPanelApp extends StatelessWidget {
       darkTheme: PanelTheme.dark,
       // 根据设备系统设置，在上面的浅色和深色主题之间自动切换。
       themeMode: ThemeMode.system,
-      // 应用启动后先显示包含两个一级 Tab 的页面容器。
-      home: const TabShell(),
+      // 目前只有应用启动器这一个主页面，底部常用栏由它自己管理。
+      home: const Scaffold(body: AppsPage()),
     );
   }
 }

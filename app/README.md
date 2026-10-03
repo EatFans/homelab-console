@@ -1,10 +1,10 @@
 # HomeLab Panel
 
-HomeLab Panel 是 [HomeLab](../README.md) 的 Flutter 平板控制端。家庭局域网中的 HomeLab Hub 将负责设备接入、状态管理和指令执行；Panel 负责向家庭成员展示状态、接收操作，并呈现操作结果。
+HomeLab Panel 是 [HomeLab](../README.md) 的 Flutter 平板控制终端。家庭局域网中的 HomeLab Hub 将负责设备接入、状态管理和指令执行；Panel 负责向家庭成员展示状态、接收操作，并呈现操作结果。当前的图标是终端内的功能入口，后续控制能力需要通过 Hub 接入。
 
 ## 当前进度
 
-目前是一个**可运行的双 Tab 框架**。默认进入「应用」页，可上下滚动查看功能入口；底部悬浮切换栏可以在「应用」和「总览」之间切换。「总览」暂为占位页。
+目前只有**一个「应用」一级页面**，可上下滚动查看功能入口。底部保留单个悬浮 Tab 的外观；其他一级页面和 AI Agent 入口尚未确定，暂不加入占位 Tab。
 
 点击任一应用图标会进入对应标题的占位功能页，并可返回应用列表。入口和页首的「中枢未连接」提示均为界面骨架：Hub 服务端、网络通信、配对和设备控制尚未实现，当前没有真实设备数据。
 
@@ -22,24 +22,22 @@ app/
 │   ├── theme/
 │   │   └── panel_theme.dart         浅色/深色颜色配置
 │   └── pages/
-│       ├── tab_shell.dart           底部 Tab 和两个一级页面的切换
+│       ├── tab_shell.dart           页面外壳和单个悬浮 Tab
 │       ├── apps_page.dart           「应用」页及功能入口网格
-│       ├── overview_page.dart       「总览」占位页
 │       └── feature_placeholder_page.dart  点击入口后的占位页
 ├── test/                            页面交互测试
 ├── pubspec.yaml                     包名、版本和依赖
 └── analysis_options.yaml            Dart 静态检查规则
 ```
 
-启动顺序：`main.dart` → `app.dart` → `pages/tab_shell.dart` → `pages/apps_page.dart`。点击入口时，再打开 `pages/feature_placeholder_page.dart`；切换 Tab 时显示 `pages/overview_page.dart`。
+启动顺序：`main.dart` → `app.dart` → `pages/tab_shell.dart` → `pages/apps_page.dart`。点击入口时，再打开 `pages/feature_placeholder_page.dart`。
 
 | 你想改什么 | 去哪个文件 |
 | --- | --- |
 | 应用启动、系统浅色/深色跟随 | `lib/app.dart` |
 | 颜色和主题 | `lib/theme/panel_theme.dart` |
-| 底部悬浮 Tab、默认显示哪个页 | `lib/pages/tab_shell.dart` |
+| 底部悬浮 Tab | `lib/pages/tab_shell.dart` |
 | 应用图标、排列和顶部状态提示 | `lib/pages/apps_page.dart` |
-| 总览页内容 | `lib/pages/overview_page.dart` |
 | 入口点击后的临时页面 | `lib/pages/feature_placeholder_page.dart` |
 
 刚接触 Flutter 时，按上面的启动顺序读源码即可。`Widget` 是界面组件，`build` 返回组件树；`StatefulWidget` 用于保存会变化的值，调用 `setState` 后 Flutter 会重新构建相关界面。应用入口通过 `Navigator.push` 打开功能页，功能页通过 `Navigator.pop` 返回。关键位置有中文注释。
@@ -67,7 +65,7 @@ flutter test
 flutter build apk --debug
 ```
 
-现有测试检查 Tab 切换、功能入口打开和返回。加入 Hub 通信和设备操作后，再为实际业务逻辑补充测试。
+现有测试检查单个 Tab、功能入口打开和返回，以及窄屏滚动。加入 Hub 通信和设备操作后，再为实际业务逻辑补充测试。
 
 ## 后续如何接入 Hub
 
