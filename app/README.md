@@ -63,7 +63,7 @@ flutter test
 flutter build apk --debug
 ```
 
-需要安装包给 Android 设备测试时，执行 `flutter build apk --release`，产物位于 `build/app/outputs/flutter-apk/app-release.apk`。常用栏的图标排列通过 Flutter 官方 `shared_preferences` 插件保存在设备本机；这份配置目前不会与 Hub 同步。
+需要安装包给 Android 设备测试时，执行 `flutter build apk --release`，产物位于 `build/app/outputs/flutter-apk/app-release.apk`。当前 Android `release` 构建仍使用本机调试签名，仅供安装测试；正式分发前需配置正式签名。常用栏的图标排列通过 Flutter 官方 `shared_preferences` 插件保存在设备本机；这份配置目前不会与 Hub 同步。
 
 现有测试检查左右翻页、功能入口打开和返回、长按拖拽，以及常用栏的本地保存。加入 Hub 通信和设备操作后，再为实际业务逻辑补充测试。
 
