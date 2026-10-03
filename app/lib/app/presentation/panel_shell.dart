@@ -2,6 +2,7 @@ import 'dart:ui';
 
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:homelab_panel/app/theme/panel_theme.dart';
 import 'package:homelab_panel/features/dashboard/presentation/dashboard_screen.dart';
 import 'package:homelab_panel/features/launcher/presentation/launcher_screen.dart';
 
@@ -18,28 +19,38 @@ class _PanelShellState extends State<PanelShell> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: Stack(
-        children: [
-          IndexedStack(
-            index: _selectedTab,
-            children: const [LauncherScreen(), DashboardScreen()],
-          ),
-          Positioned(
-            left: 16,
-            right: 16,
-            bottom: 0,
-            child: SafeArea(
-              top: false,
-              minimum: const EdgeInsets.only(bottom: 18),
-              child: Center(child: _buildFloatingTabBar()),
-            ),
-          ),
-        ],
+      body: LayoutBuilder(
+        builder: (context, constraints) {
+          if (constraints.maxWidth <= 0 || constraints.maxHeight <= 0) {
+            return const SizedBox.shrink();
+          }
+
+          return Stack(
+            children: [
+              IndexedStack(
+                index: _selectedTab,
+                children: const [LauncherScreen(), DashboardScreen()],
+              ),
+              Positioned(
+                left: 16,
+                right: 16,
+                bottom: 0,
+                child: SafeArea(
+                  top: false,
+                  minimum: const EdgeInsets.only(bottom: 18),
+                  child: Center(child: _buildFloatingTabBar()),
+                ),
+              ),
+            ],
+          );
+        },
       ),
     );
   }
 
   Widget _buildFloatingTabBar() {
+    final palette = PanelPalette.of(context);
+
     return ClipRRect(
       borderRadius: BorderRadius.circular(32),
       child: BackdropFilter(
@@ -47,21 +58,21 @@ class _PanelShellState extends State<PanelShell> {
         child: Container(
           padding: const EdgeInsets.all(7),
           decoration: BoxDecoration(
-            color: const Color(0xE619202B),
+            color: palette.floatingBar,
             borderRadius: BorderRadius.circular(32),
-            border: Border.all(color: Colors.white.withValues(alpha: 0.14)),
-            boxShadow: const [
+            border: Border.all(color: palette.border),
+            boxShadow: [
               BoxShadow(
-                color: Color(0x66000000),
-                blurRadius: 28,
-                offset: Offset(0, 12),
+                color: palette.shadow,
+                blurRadius: 24,
+                offset: const Offset(0, 10),
               ),
             ],
           ),
           child: CupertinoSlidingSegmentedControl<int>(
             groupValue: _selectedTab,
             backgroundColor: Colors.transparent,
-            thumbColor: const Color(0xFFE7F3EF),
+            thumbColor: palette.surfaceMuted,
             padding: EdgeInsets.zero,
             onValueChanged: (value) {
               if (value != null) {
@@ -79,8 +90,9 @@ class _PanelShellState extends State<PanelShell> {
   }
 
   Widget _tabLabel(int index, IconData icon, String label) {
+    final palette = PanelPalette.of(context);
     final isSelected = _selectedTab == index;
-    final color = isSelected ? const Color(0xFF11231F) : Colors.white70;
+    final color = isSelected ? palette.accent : palette.textMuted;
 
     return SizedBox(
       width: 112,

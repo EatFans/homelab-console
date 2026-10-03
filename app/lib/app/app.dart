@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:homelab_panel/app/presentation/panel_shell.dart';
+import 'package:homelab_panel/app/theme/panel_theme.dart';
 
 class HomeLabPanelApp extends StatelessWidget {
   const HomeLabPanelApp({super.key});
@@ -9,15 +10,9 @@ class HomeLabPanelApp extends StatelessWidget {
     return MaterialApp(
       title: 'HomeLab Panel',
       debugShowCheckedModeBanner: false,
-      theme: ThemeData(
-        useMaterial3: true,
-        brightness: Brightness.dark,
-        colorScheme: ColorScheme.fromSeed(
-          seedColor: const Color(0xFF9AE4D4),
-          brightness: Brightness.dark,
-        ),
-        scaffoldBackgroundColor: const Color(0xFF0C111A),
-      ),
+      theme: PanelTheme.light,
+      darkTheme: PanelTheme.dark,
+      themeMode: ThemeMode.system,
       home: const PanelShell(),
     );
   }

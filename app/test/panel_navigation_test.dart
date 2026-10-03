@@ -10,7 +10,7 @@ void main() {
     addTearDown(tester.view.resetDevicePixelRatio);
 
     await tester.pumpWidget(const HomeLabPanelApp());
-    expect(find.text('应用中心'), findsOneWidget);
+    expect(find.text('中枢未连接'), findsOneWidget);
 
     await tester.tap(find.text('总览'));
     await tester.pumpAndSettle();
@@ -18,7 +18,7 @@ void main() {
 
     await tester.tap(find.text('应用'));
     await tester.pumpAndSettle();
-    expect(find.text('应用中心'), findsOneWidget);
+    expect(find.text('中枢未连接'), findsOneWidget);
 
     await tester.tap(find.text('房间'));
     await tester.pumpAndSettle();
@@ -26,10 +26,12 @@ void main() {
 
     await tester.tap(find.text('返回应用'));
     await tester.pumpAndSettle();
-    expect(find.text('应用中心'), findsOneWidget);
+    expect(find.text('中枢未连接'), findsOneWidget);
   });
 
-  testWidgets('scrolls to lower app entries on a narrow screen', (tester) async {
+  testWidgets('scrolls to lower app entries on a narrow screen', (
+    tester,
+  ) async {
     tester.view.physicalSize = const Size(390, 700);
     tester.view.devicePixelRatio = 1;
     addTearDown(tester.view.resetPhysicalSize);
@@ -41,6 +43,8 @@ void main() {
       280,
       scrollable: find.byType(Scrollable).first,
     );
+    await tester.drag(find.byType(CustomScrollView), const Offset(0, -220));
+    await tester.pumpAndSettle();
     await tester.tap(find.text('设置'));
     await tester.pumpAndSettle();
 

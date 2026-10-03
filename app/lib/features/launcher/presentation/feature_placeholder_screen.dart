@@ -1,21 +1,22 @@
 import 'package:flutter/material.dart';
+import 'package:homelab_panel/app/theme/panel_theme.dart';
 
 class FeaturePlaceholderScreen extends StatelessWidget {
   const FeaturePlaceholderScreen({
     super.key,
     required this.title,
     required this.icon,
-    required this.accent,
   });
 
   final String title;
   final IconData icon;
-  final Color accent;
 
   @override
   Widget build(BuildContext context) {
+    final palette = PanelPalette.of(context);
+
     return Scaffold(
-      appBar: AppBar(title: Text(title), backgroundColor: Colors.transparent),
+      appBar: AppBar(title: Text(title)),
       body: SafeArea(
         child: Center(
           child: Padding(
@@ -27,23 +28,25 @@ class FeaturePlaceholderScreen extends StatelessWidget {
                   width: 98,
                   height: 98,
                   decoration: BoxDecoration(
-                    color: accent.withValues(alpha: 0.18),
+                    color: palette.surface,
                     borderRadius: BorderRadius.circular(30),
+                    border: Border.all(color: palette.border),
                   ),
-                  child: Icon(icon, color: accent, size: 46),
+                  child: Icon(icon, color: palette.accent, size: 42),
                 ),
                 const SizedBox(height: 28),
                 Text(
                   title,
                   style: Theme.of(context).textTheme.headlineMedium?.copyWith(
+                    color: palette.text,
                     fontWeight: FontWeight.w700,
                   ),
                 ),
                 const SizedBox(height: 10),
-                const Text(
+                Text(
                   '功能页面已预留，等待家庭中枢接入。',
                   textAlign: TextAlign.center,
-                  style: TextStyle(color: Color(0xFF9BA8B7), fontSize: 15),
+                  style: TextStyle(color: palette.textMuted, fontSize: 15),
                 ),
                 const SizedBox(height: 28),
                 OutlinedButton.icon(
