@@ -4,7 +4,7 @@ HomeLab Panel 是 [HomeLab](../README.md) 的 Flutter 平板控制终端。家�
 
 ## 当前进度
 
-目前只有**一个应用桌面**：左右滑动切换图标页，底部固定常用应用栏。长按上方图标可拖入常用栏；常用栏内拖动可交换位置，拖回上方页面可移出。常用栏的排列保存在本机，重启后恢复。其他一级页面和 AI Agent 入口尚未确定。
+目前只有**一个应用桌面**：左右滑动切换图标页，底部固定常用应用栏。长按桌面图标可拖到另一个格子调整位置；拖到左右页边停留片刻可以跨页摆放。图标也可拖入常用栏；常用栏内拖动可交换位置，拖回上方页面可移出。桌面与常用栏的排列都保存在本机，重启后恢复。其他一级页面和 AI Agent 入口尚未确定。
 
 点击「设置」会进入独立功能页，可以选择跟随系统、浅色或深色外观，选择保存在本机。其他应用入口暂时打开对应标题的占位页。页首的「中枢未连接」提示仍是界面骨架：Hub 服务端、网络通信、配对和设备控制尚未实现，当前没有真实设备数据。
 
@@ -27,7 +27,8 @@ app/
 │   └── features/                    每个功能各管自己的 UI 和逻辑
 │       ├── launcher/
 │       │   ├── launcher_page.dart    横向分页、拖拽与常用应用栏
-│       │   └── dock_storage.dart    常用栏本地存取
+│       │   ├── dock_storage.dart    常用栏本地存取
+│       │   └── app_order_storage.dart 桌面图标顺序存取
 │       ├── settings/
 │       │   ├── settings_page.dart   设置 UI
 │       │   └── settings_controller.dart 外观选择与本地保存
@@ -47,6 +48,7 @@ app/
 | 增减桌面入口、指定入口打开的页面 | `lib/app/feature_catalog.dart` |
 | 横向分页、拖拽、底部常用栏和顶部状态提示 | `lib/features/launcher/launcher_page.dart` |
 | 常用栏在本机的存取 | `lib/features/launcher/dock_storage.dart` |
+| 桌面图标顺序在本机的存取 | `lib/features/launcher/app_order_storage.dart` |
 | 设置页的 UI 和外观选择逻辑 | `lib/features/settings/` |
 | 尚未实现功能时显示的页面 | `lib/features/placeholder/feature_placeholder_page.dart` |
 
@@ -85,9 +87,9 @@ flutter test
 flutter build apk --debug
 ```
 
-需要安装包给 Android 设备测试时，执行 `flutter build apk --release`，产物位于 `build/app/outputs/flutter-apk/app-release.apk`。当前 Android `release` 构建仍使用本机调试签名，仅供安装测试；正式分发前需配置正式签名。常用栏的图标排列通过 Flutter 官方 `shared_preferences` 插件保存在设备本机；这份配置目前不会与 Hub 同步。
+需要安装包给 Android 设备测试时，执行 `flutter build apk --release`，产物位于 `build/app/outputs/flutter-apk/app-release.apk`。当前 Android `release` 构建仍使用本机调试签名，仅供安装测试；正式分发前需配置正式签名。桌面和常用栏的图标排列通过 Flutter 官方 `shared_preferences` 插件保存在设备本机；这份配置目前不会与 Hub 同步。
 
-现有测试检查左右翻页、功能入口打开和返回、长按拖拽、常用栏的本地保存，以及外观设置的切换与恢复。加入 Hub 通信和设备操作后，再为实际业务逻辑补充测试。
+现有测试检查左右翻页、功能入口打开和返回、桌面排序与跨页拖拽、常用栏的本地保存，以及外观设置的切换与恢复。加入 Hub 通信和设备操作后，再为实际业务逻辑补充测试。
 
 ## 后续如何接入 Hub
 

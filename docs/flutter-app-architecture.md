@@ -4,7 +4,7 @@
 
 `app/` 是运行在家庭平板上的 Flutter 控制端。设备接入、自动化规则和状态的权威数据由局域网内的 HomeLab Hub 负责；Panel 负责展示状态、发出控制请求，以及清楚地呈现连接和操作结果。
 
-目前已有可运行的横向分页应用桌面、底部常用应用栏、独立设置页和其他功能的占位页。常用栏位置和外观设置使用 `shared_preferences` 保存在本机。Hub、通信协议和设备模型尚未确定，因此不提前引入网络、复杂状态管理、路由或代码生成依赖。具体页面划分见[页面与交互规划](panel-page-plan.md)。
+目前已有可运行的横向分页应用桌面、图标拖拽排序、底部常用应用栏、独立设置页和其他功能的占位页。桌面与常用栏的位置以及外观设置使用 `shared_preferences` 保存在本机。Hub、通信协议和设备模型尚未确定，因此不提前引入网络、复杂状态管理、路由或代码生成依赖。具体页面划分见[页面与交互规划](panel-page-plan.md)。
 
 ## 参考项目与取舍
 
@@ -32,7 +32,8 @@ app/
 │   └── features/
 │       ├── launcher/
 │       │   ├── launcher_page.dart    # 分页、拖拽与常用栏
-│       │   └── dock_storage.dart    # 常用栏本地存取
+│       │   ├── dock_storage.dart    # 常用栏本地存取
+│       │   └── app_order_storage.dart # 桌面图标顺序存取
 │       ├── settings/
 │       │   ├── settings_page.dart   # 设置页面
 │       │   └── settings_controller.dart # 外观状态与保存
