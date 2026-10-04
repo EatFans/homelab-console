@@ -433,7 +433,7 @@ class _LauncherPageState extends State<LauncherPage> {
                                   constraints.biggest,
                                 ),
                                 onDragUpdate: _onDragUpdate,
-                            onDragEnd: (_) => _cancelPageTurn(),
+                                onDragEnd: (_) => _cancelPageTurn(),
                                 childWhenDragging: Opacity(
                                   opacity: 0.3,
                                   child: _AppTile(
